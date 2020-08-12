@@ -1,0 +1,52 @@
+{
+  "name": "@freedom_sky/yop-nodejs-sdk",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "npm run test && tsc",
+    "lint": "tsc --noEmit && eslint 'src/**/*.{js,ts}' --quiet --fix",
+    "test": "",
+    "publish": "npm run build && npm publish --access public"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run test && tsc --noEmit && lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,ts}": [
+      "eslint --fix"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/freedom-git/yop-nodejs-sdk.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/freedom-git/yop-nodejs-sdk/issues"
+  },
+  "homepage": "https://github.com/freedom-git/yop-nodejs-sdk#readme",
+  "devDependencies": {
+    "@types/jest": "^25.2.1",
+    "@types/node": "^13.13.15",
+    "@typescript-eslint/eslint-plugin": "^2.29.0",
+    "@typescript-eslint/parser": "^2.29.0",
+    "eslint": "^6.8.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-jsdoc": "^24.0.0",
+    "eslint-plugin-prettier": "^3.1.3",
+    "husky": "^4.2.5",
+    "jest": "^25.4.0",
+    "lint-staged": "^10.1.7",
+    "prettier": "^2.0.5",
+    "ts-jest": "^25.4.0",
+    "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "urlsafe-base64": "^1.0.0"
+  }
+}

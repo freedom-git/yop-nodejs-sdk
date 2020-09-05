@@ -1,5 +1,6 @@
 import { AESEncrypter } from './AESEncrypter';
 import { Base64Url } from './Base64Url';
+import * as crypto from 'crypto';
 
 export abstract class YopSignUtils {
     /**
@@ -87,81 +88,114 @@ export abstract class YopSignUtils {
     }
 
     public static decrypt($source, $private_Key, $public_Key) {
-        //    $private_key = "-----BEGIN RSA PRIVATE KEY-----\n" .
-        //        wordwrap($private_Key, 64, "\n", true) .
-        //        "\n-----END RSA PRIVATE KEY-----";
+        // 格式化密钥
+        const secretKeyInOneLine = $private_Key;
+        const startMark = '-----BEGIN RSA PRIVATE KEY-----';
+        const endMark = '-----END RSA PRIVATE KEY-----';
+        let private_key = '';
+        let start = 0;
+        while (start <= secretKeyInOneLine.length) {
+            if (private_key.length) {
+                private_key += secretKeyInOneLine.substr(start, 64) + '\n';
+            } else {
+                private_key = secretKeyInOneLine.substr(start, 64) + '\n';
+            }
+            start += 64;
+        }
+        private_key = startMark + '\n' + private_key + endMark;
 
-        //    extension_loaded('openssl') or die('php需要openssl扩展支持');
+        //分解参数
+        const $args = $source.split('$');
 
-        //    /* 提取私钥 */
-        //    $privateKey = openssl_get_privatekey($private_key);
+        if ($args.length !== 4) {
+            throw new Error('source invalid : ');
+        }
 
-        //    ($privateKey) or die('密钥不可用');
+        const $encryptedRandomKeyToBase64 = $args[0];
+        const $encryptedDataToBase64 = $args[1];
+        const $symmetricEncryptAlg = $args[2];
+        const $digestAlg = $args[3];
 
-        //    //分解参数
-        //    $args = explode('$', $source);
+        //用私钥对随机密钥进行解密
+        const $randomKey = crypto.privateDecrypt(
+            {
+                key: private_key,
+                padding: crypto.constants.RSA_PKCS1_PADDING,
+            },
+            Buffer.from(Base64Url.decode($encryptedRandomKeyToBase64), 'base64'),
+        );
 
-        //    if (count($args) != 4) {
-        //        die('source invalid : ');
-        //    }
+        const $encryptedDataArr = AESEncrypter.decode(Base64Url.decode($encryptedDataToBase64), $randomKey).split('$');
 
-        //    $encryptedRandomKeyToBase64 = $args[0];
-        //    $encryptedDataToBase64 = $args[1];
-        //    $symmetricEncryptAlg = $args[2];
-        //    $digestAlg = $args[3];
+        //分解参数
+        const $sourceData = $encryptedDataArr[0];
+        const $signToBase64 = $encryptedDataArr[1];
 
-        //    //用私钥对随机密钥进行解密
-        //    openssl_private_decrypt(Base64Url::decode($encryptedRandomKeyToBase64), $randomKey, $privateKey);
+        // 格式化公钥
+        const publicKeyInOneLine = $public_Key;
+        const publicStartMark = '-----BEGIN PUBLIC KEY-----';
+        const publicEndMark = '-----END PUBLIC KEY-----';
+        let public_key = '';
+        const len = publicKeyInOneLine.length;
+        let publicStart = 0;
+        while (publicStart <= len) {
+            if (public_key.length) {
+                public_key += publicKeyInOneLine.substr(publicStart, 64) + '\n';
+            } else {
+                public_key = publicKeyInOneLine.substr(publicStart, 64) + '\n';
+            }
+            publicStart += 64;
+        }
+        public_key = publicStartMark + '\n' + public_key + publicEndMark;
 
-        //    openssl_free_key($privateKey);
+        const verify = crypto.createVerify('RSA-' + $digestAlg);
+        verify.update($sourceData);
+        const $res = verify.verify(public_key, $signToBase64, 'base64');
 
-        //    $encryptedData = openssl_decrypt(Base64Url::decode($encryptedDataToBase64), "AES-128-ECB", $randomKey, OPENSSL_RAW_DATA);
-
-        //    //分解参数
-        //    $signToBase64=substr(strrchr($encryptedData,'$'),1);
-        //    $sourceData = substr($encryptedData,0,strlen($encryptedData)-strlen($signToBase64)-1);
-
-        //    $public_key = "-----BEGIN PUBLIC KEY-----\n" .
-        //        wordwrap($public_Key, 64, "\n", true) .
-        //        "\n-----END PUBLIC KEY-----";
-
-        //    $publicKey = openssl_pkey_get_public($public_key);
-
-        //    $res = openssl_verify($sourceData,Base64Url::decode($signToBase64), $publicKey, $digestAlg); //验证
-
-        //    openssl_free_key($publicKey);
-
-        //    //输出验证结果，1：验证成功，0：验证失败
-        //    if ($res == 1) {
-        //        return $sourceData;
-        //    } else {
-        //        Die("verifySign fail!");
-        //    }
-        throw new Error('TODO');
+        if ($res) {
+            return $sourceData;
+        } else {
+            throw new Error('verifySign fail!');
+        }
     }
 
     static signRsa($source, $private_Key) {
-        // $private_key = "-----BEGIN RSA PRIVATE KEY-----\n" .
-        //     wordwrap($private_Key, 64, "\n", true) .
-        //     "\n-----END RSA PRIVATE KEY-----";
-
-        // extension_loaded('openssl') or die('php需要openssl扩展支持');
-
-        // /* 提取私钥 */
-        // $privateKey = openssl_get_privatekey($private_key);
-
-        // ($privateKey) or die('密钥不可用');
-
-        // openssl_sign($source, $encode_data, $privateKey, "SHA256");
-
-        // openssl_free_key($privateKey);
-
-        // $signToBase64 = Base64Url::encode($encode_data);
-
-        // $signToBase64 .= '$SHA256';
-
-        // return $signToBase64;
-        throw new Error('TODO');
+        // 格式化密钥
+        const secretKeyInOneLine = $private_Key;
+        const startMark = '-----BEGIN RSA PRIVATE KEY-----';
+        const endMark = '-----END RSA PRIVATE KEY-----';
+        let private_key = '';
+        let start = 0;
+        while (start <= secretKeyInOneLine.length) {
+            if (private_key.length) {
+                private_key += secretKeyInOneLine.substr(start, 64) + '\n';
+            } else {
+                private_key = secretKeyInOneLine.substr(start, 64) + '\n';
+            }
+            start += 64;
+        }
+        private_key = startMark + '\n' + private_key + endMark;
+        // 格式化密钥结束
+        const signer = crypto.createSign('RSA-SHA256');
+        signer.update($source);
+        let sig = signer.sign(private_key, 'base64');
+        sig = sig.replace(/[+]/g, '-');
+        sig = sig.replace(/[/]/g, '_');
+        const sig_len = sig.length;
+        let find_len = 0;
+        let start_len = sig_len - 1;
+        while (1) {
+            if (sig.substr(start_len, 1) == '=') {
+                find_len++;
+                start_len--;
+                continue;
+            }
+            break;
+        }
+        sig = sig.substr(0, sig_len - find_len);
+        let $signToBase64 = sig;
+        $signToBase64 += '$SHA256';
+        return $signToBase64;
     }
 
     static getPrivateKey($filepath, $password) {

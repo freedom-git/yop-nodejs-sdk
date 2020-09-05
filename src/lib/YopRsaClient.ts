@@ -124,11 +124,43 @@ export class YopRsaClient {
         $YopRequest.$headers = $headers;
     }
 
+    public __set($name, $value)
+    {
+        this[$name] = $value;
+    }
+
+    public __get($name)
+    {
+        return this[$name];
+    }
+
+    public static async get($methodOrUri, $YopRequest)
+    {
+        const $content = await YopRsaClient.getForString($methodOrUri, $YopRequest);
+        console.log('$content', $content);
+        const $response = YopRsaClient.handleRsaResult($YopRequest, $content);
+        return $response;
+    }
+
+    public static async getForString($methodOrUri, $YopRequest)
+    {
+        $YopRequest.httpMethod = "GET";
+        let $serverUrl = YopRsaClient.richRequest($methodOrUri, $YopRequest);
+        $serverUrl += (!$serverUrl.includes('?') ? '?' : '&') + $YopRequest.toQueryString();
+
+        YopRsaClient.SignRsaParameter($methodOrUri, $YopRequest);
+        const $response = HttpRequest.request($serverUrl, $YopRequest);
+        return $response;
+    }
+
     public static async post($methodOrUri, $YopRequest: YopRequest) {
         const $content = await YopRsaClient.postString($methodOrUri, $YopRequest);
         console.log('$content', $content);
         const $response = YopRsaClient.handleRsaResult($YopRequest, $content);
-        console.log('$response', $response);
+        if(YopConfig.$debug) {
+            console.log('$content', $content);
+            console.log('$response', $response);
+        }
         return $response;
     }
 
@@ -304,7 +336,7 @@ export class YopRsaClient {
         return $serverUrl;
     }
 
-    public static handleRsaResult($YopRequest: YopRequest, $content) {
+    public static handleRsaResult($YopRequest: YopRequest, $content):YopResponse {
         if ($YopRequest.$downRequest) {
             return $content;
         }

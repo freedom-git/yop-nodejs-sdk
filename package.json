@@ -1,6 +1,6 @@
 {
   "name": "@freedom_sky/yop-nodejs-sdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
@@ -47,6 +47,7 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
+    "form-data": "^3.0.0",
     "urlsafe-base64": "^1.0.0"
   }
 }
